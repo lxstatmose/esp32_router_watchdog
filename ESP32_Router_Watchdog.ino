@@ -89,14 +89,6 @@ void loop() {
   
   checkWiFiConnection();
   
-  if (millis() - sysState.lastWifiCheck > 60000) {
-    sysState.lastWifiCheck = millis();
-    if (WiFi.status() != WL_CONNECTED && sysConfig.wifiSSID != "" && !sysState.inApMode) {
-      Serial.println("[WiFi] Reconnecting...");
-      WiFi.reconnect();
-    }
-  }
-  
   checkSchedule();
 
   if (sysState.isRebooting) {
@@ -114,7 +106,8 @@ void loop() {
     return;
   }
 
-  if (sysState.inApMode || sysState.monitoringPaused) return;
+  // Monitoring works in AP+STA mode if WiFi has connected successfully
+  if (!sysState.wifiConnected || sysState.monitoringPaused) return;
 
   if (millis() - sysState.lastCheckTime > ((unsigned long)sysConfig.checkInterval * 1000)) {
     sysState.lastCheckTime = millis();

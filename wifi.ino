@@ -53,16 +53,23 @@ void connectToWiFi() {
   }
 }
 
-// Suspends background router attempts and broadcasts a localized AP for manual configuration
+// Suspends background router attempts and broadcasts a localized AP for manual configuration.
+// Uses WIFI_AP_STA mode so the board still tries to connect to the configured WiFi in the background.
 void enableAPMode() {
-  Serial.println("[WiFi] Enabling Emergency Config AP...");
-  WiFi.disconnect();
-  WiFi.mode(WIFI_AP);
+  Serial.println("[WiFi] Enabling Emergency Config AP (AP+STA mode)...");
+  
+  WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(sysConfig.apSSID.c_str(), sysConfig.apPASS.c_str());
   
   sysState.wifiConnected = false;
   sysState.inApMode = true;
   sysState.apActivationTime = millis(); // Track when the AP started
+  
+  // If WiFi credentials are set, begin background connection attempts
+  if (sysConfig.wifiSSID != "" && sysConfig.wifiSSID.length() >= 3) {
+    Serial.println("[WiFi] Background connection to " + sysConfig.wifiSSID + " will be attempted...");
+    WiFi.begin(sysConfig.wifiSSID.c_str(), sysConfig.wifiPASS.c_str());
+  }
   
   Serial.println("[WiFi] Accessible Network: " + sysConfig.apSSID);
   Serial.println("[WEB] Control Panel: http://192.168.4.1");
@@ -93,16 +100,26 @@ void checkWiFiConnection() {
     return;
   }
   
+  // If in AP mode but WiFi credentials exist, keep trying to connect in background
+  if (sysState.inApMode) {
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("[WiFi] Router connection stabilized while in AP mode. Silencing AP.");
+      sysState.wifiConnected = true;
+      sysState.inApMode = false;
+      sysState.apActivationTime = 0;
+      WiFi.softAPdisconnect(true);
+    } else {
+      // Ensure we keep trying to connect to the configured network
+      if (WiFi.status() != WL_CONNECTED && WiFi.getMode() != WIFI_AP_STA) {
+        WiFi.mode(WIFI_AP_STA);
+        WiFi.begin(sysConfig.wifiSSID.c_str(), sysConfig.wifiPASS.c_str());
+      }
+    }
+    return;
+  }
+  
   if (WiFi.status() == WL_CONNECTED) {
     sysState.wifiConnected = true;
-    
-    // If the board accidentally left AP active while connecting, shut it down
-    if (sysState.inApMode) {
-      Serial.println("[WiFi] Router connection stabilized. Silencing AP mode.");
-      WiFi.softAPdisconnect(true);
-      sysState.inApMode = false;
-    }
-    
     sysState.apActivationTime = 0;
   } else {
     sysState.wifiConnected = false;

@@ -341,13 +341,19 @@ void handleSaveAP() {
     saveSettings();
     Serial.printf("[WEB] AP settings saved: %s, enabled=%d, auto=%d\n", sysConfig.apSSID.c_str(), sysConfig.apEnabled, sysConfig.autoApEnabled);
     if (sysConfig.apEnabled) {
-      Serial.println("[WEB] AP enabled, disconnecting WiFi...");
-      WiFi.disconnect();
+      Serial.println("[WEB] AP enabled, switching to AP+STA mode...");
+      sysState.inApMode = true;
       sysState.wifiConnected = false;
+      WiFi.mode(WIFI_AP_STA);
       delay(100);
       WiFi.softAP(sysConfig.apSSID.c_str(), sysConfig.apPASS.c_str());
+      // Keep trying to connect to configured WiFi if credentials exist
+      if (sysConfig.wifiSSID != "" && sysConfig.wifiSSID.length() >= 3) {
+        WiFi.begin(sysConfig.wifiSSID.c_str(), sysConfig.wifiPASS.c_str());
+      }
     } else {
       Serial.println("[WEB] AP disabled, connecting to WiFi...");
+      sysState.inApMode = false;
       WiFi.softAPdisconnect(true);
       delay(100);
       connectToWiFi();
