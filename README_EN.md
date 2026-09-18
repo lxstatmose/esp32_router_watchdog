@@ -1,6 +1,6 @@
-# ESP32 Router Watchdog 🌐📡
+# ESP32 Router Watchdog
 
-*[Читать на русском (Russian)](README.md)*
+**English** | [Русский](README.md)
 
 An advanced, highly reliable hardware watchdog for routers, modems, and networking equipment, powered by **ESP32** (fully optimized for ESP32-C3, ESP32-S3, and classic ESP32 boards).
 
@@ -9,17 +9,17 @@ Networking equipment sometimes freezes or drops the connection. This project act
 
 It comes with a beautiful, industrial-themed Dark Web UI to configure rules completely wirelessly.
 
-## Features ✨
-- 🖥️ **Slick Web Interface (Cyberpunk Theme)**: Monospace fonts, flat grid layouts, strict 1px borders, and neon accents. Hosted natively on the ESP32.
-- 🔄 **Sequential Boot**: If you have multiple routers/switches, you can delay their boot sequentially. This prevents electrical spikes and allows modems to establish a DSL/Fiber line before the router requests an IP.
-- 🕒 **Scheduled Reboot**: Force a clean reboot at a specific time every day (e.g., 03:30 AM).
-- 🆘 **Auto-AP Fallback**: If the ESP strictly can't connect to your Wi-Fi, it will broadcast its own "Access Point" so you can connect directly from your phone and fix the settings.
-- 💾 **Flash Memory Persistence**: All settings are safely saved into the ESP32 NVS via the `Preferences` library and reliably loaded upon boot.
-- 🇬🇧🇷🇺 **Bilingual UI**: Switch seamlessly between English and Russian languages in the Web Interface.
+## Features
+- **Slick Web Interface (Cyberpunk Theme)**: Monospace fonts, flat grid layouts, strict 1px borders, and neon accents. Hosted natively on the ESP32.
+- **Sequential Boot**: If you have multiple routers/switches, you can delay their boot sequentially. This prevents electrical spikes and allows modems to establish a DSL/Fiber line before the router requests an IP.
+- **Scheduled Reboot**: Force a clean reboot at a specific time every day (e.g., 03:30 AM).
+- **Auto-AP Fallback**: If the ESP strictly can't connect to your Wi-Fi, it will broadcast its own "Access Point" so you can connect directly from your phone and fix the settings.
+- **Flash Memory Persistence**: All settings are safely saved into the ESP32 NVS via the `Preferences` library and reliably loaded upon boot.
+- **Bilingual UI**: Switch seamlessly between English and Russian languages in the Web Interface.
 
 ---
 
-## 🚀 How to Install & Compile
+## How to Install & Compile
 
 1. Open `ESP32_Router_Watchdog.ino` in your **Arduino IDE**.
 2. Make sure you have the [ESP32 Core]installed in your Boards Manager.
