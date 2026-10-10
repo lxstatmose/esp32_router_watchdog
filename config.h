@@ -41,16 +41,24 @@
 #define DEFAULT_SCHEDULE_HOUR 3
 #define DEFAULT_SCHEDULE_MINUTE 30
 
+// Timezone & NTP defaults (Fallback if flash is empty)
+#define DEFAULT_GMT_OFFSET_SEC 10800 // UTC+3 (Moscow), in seconds
+#define DEFAULT_NTP_SERVER "ntp.yandex.ru" // Yandex public NTP (resolves to 213.180.204.242)
+#define DEFAULT_DST_OFFSET_SEC 0 // Daylight saving offset, Russia has none
+
 #define LANG_RU 0
 #define LANG_EN 1
 
 // ==========================
 // NTP CONFIGURATION
+// Primary server is user-configurable (default: Yandex).
+// Secondary servers act as automatic fallbacks in configTime().
 // ==========================
-#define NTP_SERVER_1 "pool.ntp.org"
-#define NTP_SERVER_2 "time.nist.gov"
-#define GMT_OFFSET 10800 // +3 Hours (Moscow)
-#define DAY_LIGHT_OFFSET 0
+#define NTP_FALLBACK_1 "pool.ntp.org"
+#define NTP_FALLBACK_2 "time.nist.gov"
+#define NTP_FALLBACK_3 "ru.pool.ntp.org"
+#define GMT_OFFSET DEFAULT_GMT_OFFSET_SEC
+#define DAY_LIGHT_OFFSET DEFAULT_DST_OFFSET_SEC
 
 // Extern definitions for standard objects
 extern Preferences preferences;
@@ -88,6 +96,10 @@ struct SystemConfig {
   bool scheduleEnabled;
   int scheduleHour;
   int scheduleMinute;
+
+  int gmtOffsetSec;
+  int dstOffsetSec;
+  String ntpServer;
 
   String apSSID;
   String apPASS;
@@ -134,6 +146,7 @@ void enableAPMode();
 void disableAPMode();
 void checkWiFiConnection();
 void initNTP();
+void applyTimeSettings();
 String getCurrentTime();
 int getCurrentHour();
 int getCurrentMinute();
@@ -156,6 +169,7 @@ void saveSettings();
 void initWebServer();
 void handleRoot();
 void handleStatus();
+void handleGetTime();
 void handleSaveLanguage();
 void handleRelayOrder();
 void handleSaveAP();

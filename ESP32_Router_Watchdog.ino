@@ -40,6 +40,9 @@ void setup() {
   sysConfig.relayDelay = DEFAULT_RELAY_DELAY;
   sysConfig.scheduleHour = DEFAULT_SCHEDULE_HOUR;
   sysConfig.scheduleMinute = DEFAULT_SCHEDULE_MINUTE;
+  sysConfig.gmtOffsetSec = DEFAULT_GMT_OFFSET_SEC;
+  sysConfig.dstOffsetSec = DEFAULT_DST_OFFSET_SEC;
+  sysConfig.ntpServer = DEFAULT_NTP_SERVER;
   sysConfig.apSSID = "RouterWatchdog-AP";
   sysConfig.apPASS = "12345678";
   sysConfig.autoApEnabled = true;

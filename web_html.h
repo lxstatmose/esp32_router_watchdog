@@ -166,6 +166,19 @@ const char index_html[] PROGMEM = R"rawliteral(
       box-shadow: inset 2px 0 0 var(--accent-target);
     }
 
+    select.form-input {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      cursor: pointer;
+      padding-right: 14px;
+    }
+
+    select.form-input option {
+      background: var(--input-bg);
+      color: var(--text-main);
+    }
+
     .btn, .lang-btn {
       background: transparent;
       border: 1px solid var(--border-color);
@@ -480,6 +493,10 @@ const char index_html[] PROGMEM = R"rawliteral(
       </div>
       <div class="panel-body">
         <form action="/save_schedule" method="POST" style="display:flex; flex-direction:column; height:100%;">
+          <div class="info-line" style="margin-bottom: 20px;">
+            <span class="info-label">%CURRENT_TIME_LABEL%</span>
+            <span class="info-value" id="currentTime" style="color: var(--accent-target);">%CURRENT_TIME%</span>
+          </div>
           <label class="checkbox-row">
             <input type="checkbox" name="enabled" %SCHED_CHECKED%>
             <span>%SCHED_LABEL%</span>
@@ -493,6 +510,15 @@ const char index_html[] PROGMEM = R"rawliteral(
               <label class="form-label">%MIN_LABEL%</label>
               <input type="number" name="minute" class="form-input" value="%SCHED_MIN%" min="0" max="59">
             </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">%TZ_LABEL%</label>
+            <select name="tz_offset" class="form-input">%TZ_OPTIONS%</select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">%NTP_LABEL%</label>
+            <input type="text" name="ntp_server" class="form-input" value="%NTP_SERVER%" placeholder="ntp.yandex.ru">
+            <div class="help-text">%NTP_HELP%</div>
           </div>
           <button type="submit" class="btn success">%SAVE_BTN% ↗</button>
         </form>
@@ -537,6 +563,18 @@ const char index_html[] PROGMEM = R"rawliteral(
   
   <script>
     const currentLang = parseInt('%LANG%', 10);
+    
+    // Live-update the schedule panel's current-time readout every second.
+    async function refreshCurrentTime() {
+      try {
+        const res = await fetch('/time');
+        if (!res.ok) return;
+        const t = await res.text();
+        const el = document.getElementById('currentTime');
+        if (el) el.textContent = t;
+      } catch (e) { /* ignore transient errors */ }
+    }
+    setInterval(refreshCurrentTime, 1000);
     
     async function apiCall(endpoint, options = {}) {
       try {

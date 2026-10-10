@@ -28,6 +28,9 @@ void loadSettings() {
   sysConfig.scheduleEnabled = preferences.getBool("sched_enabled", false);
   sysConfig.scheduleHour = preferences.getInt("sched_hour", DEFAULT_SCHEDULE_HOUR);
   sysConfig.scheduleMinute = preferences.getInt("sched_min", DEFAULT_SCHEDULE_MINUTE);
+  sysConfig.gmtOffsetSec = preferences.getInt("gmt_offset", DEFAULT_GMT_OFFSET_SEC);
+  sysConfig.dstOffsetSec = preferences.getInt("dst_offset", DEFAULT_DST_OFFSET_SEC);
+  sysConfig.ntpServer = preferences.getString("ntp_server", DEFAULT_NTP_SERVER);
   
   sysConfig.apEnabled = preferences.getBool("ap_enabled", false);
   sysConfig.apSSID = preferences.getString("ap_ssid", "RouterWatchdog-AP");
@@ -75,6 +78,9 @@ void saveSettings() {
   preferences.putBool("sched_enabled", sysConfig.scheduleEnabled);
   preferences.putInt("sched_hour", sysConfig.scheduleHour);
   preferences.putInt("sched_min", sysConfig.scheduleMinute);
+  preferences.putInt("gmt_offset", sysConfig.gmtOffsetSec);
+  preferences.putInt("dst_offset", sysConfig.dstOffsetSec);
+  preferences.putString("ntp_server", sysConfig.ntpServer);
   
   preferences.putBool("ap_enabled", sysConfig.apEnabled);
   preferences.putString("ap_ssid", sysConfig.apSSID);

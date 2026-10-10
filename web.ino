@@ -46,6 +46,12 @@ const char TXT_SCHEDULE_TITLE_RU[] = "ВРЕМЯ ПЕРЕЗАГРУЗКИ";
 const char TXT_SCHED_LABEL_RU[] = "Перезагрузить по времени";
 const char TXT_HOUR_RU[] = "Часы:";
 const char TXT_MIN_RU[] = "Минуты:";
+const char TXT_TZ_TITLE_RU[] = "ЧАСОВОЙ ПОЯС";
+const char TXT_TZ_LABEL_RU[] = "Часовой пояс:";
+const char TXT_NTP_TITLE_RU[] = "СИНХРОНИЗАЦИЯ ВРЕМЕНИ";
+const char TXT_NTP_LABEL_RU[] = "NTP сервер:";
+const char TXT_NTP_HELP_RU[] = "По умолчанию Яндекс";
+const char TXT_CURRENT_TIME_RU[] = "Текущее время:";
 const char TXT_RELAY_TITLE_RU[] = "УПРАВЛЕНИЕ РЕЛЕ";
 const char TXT_ADD_RELAY_RU[] = "Добавить реле";
 const char TXT_PIN_RU[] = "GPIO пин:";
@@ -92,6 +98,12 @@ const char TXT_SCHEDULE_TITLE_EN[] = "REBOOT TIME";
 const char TXT_SCHED_LABEL_EN[] = "Reboot by time";
 const char TXT_HOUR_EN[] = "Hour:";
 const char TXT_MIN_EN[] = "Minute:";
+const char TXT_TZ_TITLE_EN[] = "TIMEZONE";
+const char TXT_TZ_LABEL_EN[] = "Timezone:";
+const char TXT_NTP_TITLE_EN[] = "TIME SYNCHRONIZATION";
+const char TXT_NTP_LABEL_EN[] = "NTP Server:";
+const char TXT_NTP_HELP_EN[] = "Default: Yandex";
+const char TXT_CURRENT_TIME_EN[] = "Current time:";
 const char TXT_RELAY_TITLE_EN[] = "RELAYS CONTROL";
 const char TXT_ADD_RELAY_EN[] = "Add Relay";
 const char TXT_PIN_EN[] = "GPIO Pin:";
@@ -121,6 +133,7 @@ void initWebServer() {
   server.on("/save_language", handleSaveLanguage);
   server.on("/manual_reboot", handleManualReboot);
   server.on("/status", handleStatus);
+  server.on("/time", handleGetTime);
   server.on("/add_relay", HTTP_POST, handleAddRelay);
   server.on("/pause", handlePause);
   server.on("/resume", handleResume);
@@ -185,6 +198,29 @@ void handleRoot() {
   String seqDisabledClass = canUseSequential ? "" : "disabled";
   String seqDisabledAttr = canUseSequential ? "" : "disabled";
   String seqWarning = canUseSequential ? "" : (sysConfig.language == LANG_RU ? TXT_SEQ_WARNING_RU : TXT_SEQ_WARNING_EN);
+  
+  // Build the timezone <option> list, marking the currently saved offset as selected.
+  // Offsets are stored in seconds (configTime convention). Named via UTC labels.
+  struct TzEntry { int offsetSec; const char* label; };
+  const TzEntry tzList[] = {
+    {-43200, "UTC-12"}, {-39600, "UTC-11"}, {-36000, "UTC-10"}, {-32400, "UTC-9"},
+    {-28800, "UTC-8"},  {-25200, "UTC-7"},  {-21600, "UTC-6"},  {-18000, "UTC-5"},
+    {-14400, "UTC-4"},  {-10800, "UTC-3"},  {-7200, "UTC-2"},   {-3600, "UTC-1"},
+    {0, "UTC+0"},       {3600, "UTC+1"},    {7200, "UTC+2"},    {10800, "UTC+3 (Moscow)"},
+    {14400, "UTC+4"},   {18000, "UTC+5"},   {21600, "UTC+6"},   {25200, "UTC+7"},
+    {28800, "UTC+8"},   {32400, "UTC+9"},   {36000, "UTC+10"},  {39600, "UTC+11"},
+    {43200, "UTC+12"}
+  };
+  String tzOptions = "";
+  for (const TzEntry& tz : tzList) {
+    tzOptions += "<option value='" + String(tz.offsetSec) + "'";
+    if (tz.offsetSec == sysConfig.gmtOffsetSec) tzOptions += " selected";
+    tzOptions += ">" + String(tz.label) + "</option>";
+  }
+  
+  // Snapshot of the current (NTP-synced) local time for the schedule panel.
+  String currentTimeInfo = getCurrentTime();
+
 
   if (sysConfig.language == LANG_RU) {
     html.replace("%LANG%", "0");
@@ -235,6 +271,15 @@ void handleRoot() {
     html.replace("%SCHED_LABEL%", TXT_SCHED_LABEL_RU);
     html.replace("%HOUR_LABEL%", TXT_HOUR_RU);
     html.replace("%MIN_LABEL%", TXT_MIN_RU);
+    html.replace("%CURRENT_TIME_LABEL%", TXT_CURRENT_TIME_RU);
+    html.replace("%CURRENT_TIME%", currentTimeInfo);
+    html.replace("%TZ_TITLE%", TXT_TZ_TITLE_RU);
+    html.replace("%TZ_LABEL%", TXT_TZ_LABEL_RU);
+    html.replace("%TZ_OPTIONS%", tzOptions);
+    html.replace("%NTP_TITLE%", TXT_NTP_TITLE_RU);
+    html.replace("%NTP_LABEL%", TXT_NTP_LABEL_RU);
+    html.replace("%NTP_HELP%", TXT_NTP_HELP_RU);
+    html.replace("%NTP_SERVER%", sysConfig.ntpServer);
     html.replace("%RELAY_TITLE%", TXT_RELAY_TITLE_RU);
     html.replace("%ADD_RELAY_TITLE%", TXT_ADD_RELAY_RU);
     html.replace("%PIN_LABEL%", TXT_PIN_RU);
@@ -294,6 +339,15 @@ void handleRoot() {
     html.replace("%SCHED_LABEL%", TXT_SCHED_LABEL_EN);
     html.replace("%HOUR_LABEL%", TXT_HOUR_EN);
     html.replace("%MIN_LABEL%", TXT_MIN_EN);
+    html.replace("%CURRENT_TIME_LABEL%", TXT_CURRENT_TIME_EN);
+    html.replace("%CURRENT_TIME%", currentTimeInfo);
+    html.replace("%TZ_TITLE%", TXT_TZ_TITLE_EN);
+    html.replace("%TZ_LABEL%", TXT_TZ_LABEL_EN);
+    html.replace("%TZ_OPTIONS%", tzOptions);
+    html.replace("%NTP_TITLE%", TXT_NTP_TITLE_EN);
+    html.replace("%NTP_LABEL%", TXT_NTP_LABEL_EN);
+    html.replace("%NTP_HELP%", TXT_NTP_HELP_EN);
+    html.replace("%NTP_SERVER%", sysConfig.ntpServer);
     html.replace("%RELAY_TITLE%", TXT_RELAY_TITLE_EN);
     html.replace("%ADD_RELAY_TITLE%", TXT_ADD_RELAY_EN);
     html.replace("%PIN_LABEL%", TXT_PIN_EN);
@@ -409,6 +463,13 @@ void handleStatus() {
   server.send(200, "text/html", status);
 }
 
+// Lightweight endpoint polled by the dashboard JS to keep the schedule panel
+// current-time readout live without reloading the whole page.
+void handleGetTime() {
+  server.sendHeader("Cache-Control", "no-cache");
+  server.send(200, "text/plain", getCurrentTime());
+}
+
 void handleSaveLanguage() {
   if (server.hasArg("lang")) {
     sysConfig.language = constrain(server.arg("lang").toInt(), 0, 1);
@@ -467,7 +528,26 @@ void handleSaveSchedule() {
   sysConfig.scheduleEnabled = server.hasArg("enabled");
   sysConfig.scheduleHour = constrain(server.arg("hour").toInt(), 0, 23);
   sysConfig.scheduleMinute = constrain(server.arg("minute").toInt(), 0, 59);
+
+  // Timezone & NTP server (Yandex by default). Guard against empty/garbage input.
+  if (server.hasArg("tz_offset")) {
+    sysConfig.gmtOffsetSec = constrain(server.arg("tz_offset").toInt(), -43200, 50400);
+  }
+  if (server.hasArg("ntp_server") && server.arg("ntp_server").length() > 0) {
+    String ntp = server.arg("ntp_server");
+    ntp.trim();
+    if (ntp.length() > 0 && ntp.length() <= 64) {
+      sysConfig.ntpServer = ntp;
+    }
+  }
   saveSettings();
+
+  // Re-apply the new time settings immediately so the schedule uses the correct zone.
+  Serial.printf("[WEB] Time settings saved: GMT offset=%ds, NTP=%s\n", sysConfig.gmtOffsetSec, sysConfig.ntpServer.c_str());
+  if (sysState.wifiConnected && !sysState.inApMode) {
+    applyTimeSettings();
+  }
+
   server.sendHeader("Location", "/");
   server.send(302);
 }

@@ -143,8 +143,22 @@ void initNTP() {
     return;
   }
   
-  Serial.println("[NTP] Establishing chronometric sync...");
-  configTime(GMT_OFFSET, DAY_LIGHT_OFFSET, NTP_SERVER_1, NTP_SERVER_2);
+  applyTimeSettings();
+}
+
+// Applies the configured timezone, DST offset and NTP server (Yandex by default),
+// then blocks briefly until the internal RTC is populated. Safe to call at boot or
+// right after the user changes the time settings from the web UI.
+void applyTimeSettings() {
+  if (sysState.inApMode || !sysState.wifiConnected) {
+    Serial.println("[NTP] Sync bypassed (Hardware is not connected to global routed network)");
+    sysState.ntpSynced = false;
+    return;
+  }
+  
+  Serial.println("[NTP] Establishing chronometric sync via " + sysConfig.ntpServer + "...");
+  configTime(sysConfig.gmtOffsetSec, sysConfig.dstOffsetSec,
+             sysConfig.ntpServer.c_str(), NTP_FALLBACK_1, NTP_FALLBACK_2);
   
   struct tm timeinfo;
   unsigned long start = millis();
